@@ -191,6 +191,19 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # Gate on the EXACT digest we just pushed, for every platform.
+      # The earlier "scan-me" scan is only a fast PR check: it is a separate,
+      # single-platform build, so it is not proof about what we push and sign.
+      - name: Scan the pushed digest (all platforms)
+        if: github.event_name != 'pull_request'
+        env:
+          REF: ${{ env.IMAGE }}@${{ steps.push.outputs.digest }}
+        run: |
+          for p in linux/amd64 linux/arm64; do
+            docker run --rm -v "$HOME/.docker/config.json:/root/.docker/config.json:ro" "$TRIVY_IMAGE" \
+              image --platform "$p" --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed "$REF"
+          done
+
       - uses: sigstore/cosign-installer@v3
         if: github.event_name != 'pull_request'
 

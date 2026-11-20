@@ -390,7 +390,7 @@ docker commit -m "snapshot of broken state" hf hf-forensics:2026-11-17
 |---|---|---|
 | `ERROR: failed to solve: failed to read dockerfile: open Dockerfile: no such file or directory` | No `Dockerfile` in the context folder | Use `-f path/to/Dockerfile`, or run from the right folder |
 | `failed to compute cache key: failed to calculate checksum of ref …: "/requirements.txt": not found` | `COPY` source isn't in the context, or is excluded by `.dockerignore` | Check the path relative to the context; check `.dockerignore` |
-| `COPY failed: forbidden path outside the build context: ../x` | You tried to copy from outside the context | Move the file in, or make the context the parent folder (`docker build -f app/Dockerfile .`) |
+| BuildKit: `failed to compute cache key: failed to calculate checksum of ref …: "/x": not found` (legacy builder: `COPY failed: forbidden path outside the build context: ../x`) | You tried to copy from outside the context (`../x`), or the file is excluded by `.dockerignore` | Move the file in, or make the context the parent folder (`docker build -f app/Dockerfile .`) |
 | `process "/bin/sh -c pip install ..." did not complete successfully: exit code: 1` | A `RUN` command failed | Scroll up for the real error. Use `--progress=plain` to see full output |
 | `E: Unable to locate package curl` | `apt-get install` without `apt-get update` in the **same** `RUN`, or a stale cached `update` layer | `RUN apt-get update && apt-get install -y ...` in one step |
 | `/bin/sh: 1: source: not found` | `RUN` uses `/bin/sh` (dash on Debian), which lacks bash features | Use `.` instead of `source`, or `SHELL ["/bin/bash","-c"]` (topic 15) |

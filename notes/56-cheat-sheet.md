@@ -277,7 +277,7 @@ dockerd-rootless-setuptool.sh install; docker context use rootless
   "default-address-pools": [{ "base": "10.201.0.0/16", "size": 24 }],
   "dns": ["10.0.0.2"],
   "registry-mirrors": ["https://mirror.internal.example.com"],
-  "metrics-addr": "172.17.0.1:9323",
+  "metrics-addr": "10.200.0.1:9323",
   "no-new-privileges": true,
   "builder": { "gc": { "enabled": true, "defaultKeepStorage": "20GB" } }
 }
