@@ -69,7 +69,7 @@ These live in each container's **network namespace**, so changing them on the ho
 
 | Setting | Why it matters | Suggested start |
 |---|---|---|
-| `fs.inotify.max_user_watches` | **inotify** (the kernel's file-change notification system, topic 38) has a per-user limit on watched files. File watchers in many containers (dev tools, `compose watch`, log shippers, config reloaders) share the limit **per UID across the whole host**. Exhausted → `inotify_add_watch` fails with **"no space left on device"** even though the disk is fine | 524288 |
+| `fs.inotify.max_user_watches` | **inotify** (the kernel's file-change notification system, topic 38) has a per-user limit on watched files. File watchers in many containers (dev tools, `compose watch`, log shippers, config reloaders) share the limit **per UID across the whole host** (since kernel 5.11 the count is kept per user *per user namespace*, but without userns remapping, container root is host UID 0, so in practice it is host-wide). Exhausted → `inotify_add_watch` fails with **"no space left on device"** even though the disk is fine | 524288 |
 | `fs.inotify.max_user_instances` | Number of inotify instances per user. Exhausted → **"too many open files"** from watcher setup | 1024–8192 |
 | `fs.file-max` / `fs.nr_open` | System-wide / per-process maximum open files | Usually large already. Check with `cat /proc/sys/fs/file-nr` |
 | Container `nofile` ulimit | Per-container open files limit: `--ulimit nofile=65536:65536` or daemon `default-ulimits` (topic 34) | 65536 for servers with many connections |

@@ -104,7 +104,7 @@ What changes:
 | **Socket** | `$XDG_RUNTIME_DIR/docker.sock` (e.g. `/run/user/1000/docker.sock`), owned by you. Clients set `DOCKER_HOST=unix:///run/user/1000/docker.sock` or use the `rootless` context |
 | **Data** | `~/.local/share/docker` |
 | **Service** | A **systemd user service**: `systemctl --user start docker`. For it to run without you logged in: `sudo loginctl enable-linger <user>` |
-| **Networking** | The daemon can't create real veth/bridges on the host or iptables rules in the host namespace. Outbound traffic goes through a **user-space network stack** (historically slirp4netns; also pasta; newer Engine releases default to gvisor-tap-vsock). It's slower than kernel bridging |
+| **Networking** | The daemon can't create real veth/bridges on the host or iptables rules in the host namespace. Outbound traffic goes through a **user-space network stack** (historically slirp4netns; pasta is the newer default on many distros. ⚠️ *Verify against your Engine's release notes before quoting which driver is the default.*). It's slower than kernel bridging |
 | **Published ports** | Forwarded by RootlessKit's port driver. Ports **below 1024** need the host sysctl `net.ipv4.ip_unprivileged_port_start` lowered (or a capability on rootlesskit). Some port drivers don't preserve the client's source IP |
 | **Storage** | overlayfs inside a user namespace (kernel 5.11+), else `fuse-overlayfs` |
 | **Resource limits** | Need **cgroup v2** with systemd **delegation** of controllers to user sessions (cpu, memory, pids, io). Otherwise `--memory`/`--cpus` are ignored or fail |

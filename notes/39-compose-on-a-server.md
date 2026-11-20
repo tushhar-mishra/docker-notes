@@ -127,10 +127,11 @@ When `WEB_TAG` changes and you run `docker compose up -d`, for each container of
 
 Between steps 1 and 3, **nothing serves traffic** for that container. For one replica, that's a short outage (seconds to a minute, depending on start time). Compose has no built-in rolling update. To get close to zero downtime on one host:
 
-**Option A: two replicas behind a reverse proxy, updated one at a time.**
+**Option A: two replicas behind a reverse proxy (reduces risk, but is NOT zero downtime).**
 - A reverse proxy (Traefik, nginx, Caddy, HAProxy) load-balances across the `web` replicas and **health-checks** them. (It also terminates HTTPS. Certificates, ACME, forwarded headers and proxy timeouts are covered in topic 39a.)
-- Compose recreates replicas one after another. While `web-1` restarts, `web-2` serves (the proxy drops the stopped one).
-- Still a small risk window, and both replicas end up on the new version within seconds. Fine for many apps.
+- ⚠️ **Corrected:** `docker compose up -d` does **not** recreate replicas one at a time. It converges a service's containers **concurrently**, so `web-1` and `web-2` can be stopped together and both be down at once. `deploy.update_config` (parallelism, `order: start-first`) is a **Swarm** setting: plain `docker compose up` parses it but does not do a rolling update.
+- What two replicas plus a health-checking proxy *do* buy you: a crash or a slow start of one replica no longer takes the site down, and the proxy retries on the healthy one. For updates, use Option B (or the `docker-rollout` plugin, which automates it) or blue/green (Option C).
+- **Verify it yourself** before trusting any zero-downtime claim: run a load generator (`hey -z 60s http://host/` or `k6`) during `docker compose up -d` and count non-2xx responses. Paste the result here.
 
 **Option B: scale up, then scale down.**
 ```bash

@@ -115,7 +115,7 @@ When you hit it: `toomanyrequests: You have reached your pull rate limit`. Deplo
 Good practice:
 - CI tags each build with the **git SHA** (and the semver on release).
 - Deployment manifests reference **`repo:1.4.2@sha256:…`**, readable and exact.
-- Turn on **immutable tags** in the registry (ECR, Harbor, Artifact Registry and GHCR policies support it) so `1.4.2` can't be overwritten.
+- Turn on **immutable tags** in the registry (ECR, Harbor and Artifact Registry support it; GHCR has no equivalent immutable-tag setting, so there you protect release tags by process and deploy by digest) so `1.4.2` can't be overwritten.
 
 ### Promoting without rebuilding
 

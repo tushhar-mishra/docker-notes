@@ -126,7 +126,7 @@ A junior pilot is tested on the controls. A senior pilot (captain) is tested in 
 **Clarify:** Container limit vs `-Xmx`/`MaxRAMPercentage`? Exit 137 with `OOMKilled: true`? JDK version? Does the app use NIO/Netty, many threads, or JNI?
 
 **Model answer:**
-- The cgroup counts **everything** (topic 31): heap + metaspace + code cache + thread stacks (1 MB each × threads) + direct/NIO buffers + glibc malloc arenas + GC structures + page cache from tmpfs/shm. The heap is just one part.
+- The cgroup counts **everything** (topic 31): heap + metaspace + code cache + thread stacks (`-Xss`, default 1 MB, is *reserved* per thread, but only the stack pages actually touched are charged to the cgroup) + direct/NIO buffers + glibc malloc arenas + GC structures + page cache from tmpfs/shm. The heap is just one part.
 - **Prove it:** `memory.stat` (anon growing, file stable); `jcmd <pid> VM.native_memory summary` with `-XX:NativeMemoryTracking=summary` to see non-heap areas; thread count over time; RSS vs heap gap growing. A known culprit: **glibc malloc arenas** in multi-threaded apps (many 64 MB arenas) → `MALLOC_ARENA_MAX=2`, or jemalloc.
 - **Fix:** leave 25–30% headroom (`MaxRAMPercentage=70`), cap direct memory (`-XX:MaxDirectMemorySize`), fix thread/buffer leaks, set `MALLOC_ARENA_MAX`, or raise the limit based on the measured steady state.
 - **Prevent:** alert on working set / limit > 90% (topic 47); dashboards for RSS and heap together.

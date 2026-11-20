@@ -267,9 +267,15 @@ docker inspect slowstop -f '{{.State.ExitCode}}'
 docker start slowstop; docker top slowstop -o pid,args
 ```
 
-**Root cause:** shell-form start (`sh -c`): `sh` is PID 1 and ignores SIGTERM. After 10 s, SIGKILL hits the app in the middle of requests (topic 12).
+**Root cause:** whatever is PID 1 has **no SIGTERM handler**, and the kernel drops signals that PID 1 hasn't installed a handler for (topic 12). Two layers to check:
+- With `sh -c`, the shell may be PID 1. (Debian's `dash` often `exec`s a single simple command, so `docker top` may show `python` as PID 1 instead. Check, don't assume.)
+- Even when `python` *is* PID 1, `http.server` installs no SIGTERM handler, so it ignores SIGTERM too. After 10 s, SIGKILL hits the app in the middle of requests (exit 137).
 
-**Fix:** exec form (`["python","-m","http.server","8000"]`), or `exec` in the script, or `--init`. Plus graceful drain in the app (topic 45).
+**Fix:**
+- `--init` (or `init: true` in Compose, or `tini` as the ENTRYPOINT): tini is PID 1, forwards SIGTERM, and the app gets the default action (exit). This is the fix that works here.
+- Or make the app handle SIGTERM itself (`signal.signal(signal.SIGTERM, …)` and a graceful drain, topic 45).
+- Exec form (`["python","-m","http.server","8000"]`) is still right (no shell in the way), but **on its own it does not fix this case**: the `sleep` exec-form demo in topic 12 shows the same 10 s stop.
+- Verify: `time docker stop slowstop` should take well under 1 s and the exit code should be 0 or 143, not 137.
 
 **Prevent:** `docker build --check` (`JSONArgsRecommended`), reviews, stop-time metrics.
 

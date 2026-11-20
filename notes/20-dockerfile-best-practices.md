@@ -134,10 +134,13 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \
 Same source + same Dockerfile → ideally the **same image digest**. Helps with verification, caching and supply-chain security (topic 43).
 - Pin everything (practice 3).
 - Use lock files and `npm ci` / `pip install --require-hashes` / `go mod download`.
-- Avoid writing timestamps or random values into files. BuildKit supports **`SOURCE_DATE_EPOCH`** (a standard variable holding a fixed timestamp) to set file times and image creation times consistently:
+- Avoid writing timestamps or random values into files. BuildKit supports **`SOURCE_DATE_EPOCH`** (a standard variable holding a fixed timestamp). On its own it sets the image **config and history timestamps** (the "created" dates). To also rewrite the **mtimes of files inside the layers**, add the exporter option `rewrite-timestamp=true` (BuildKit ≥ 0.13):
   ```bash
-  docker buildx build --build-arg SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) .
+  SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) \
+    docker buildx build --build-arg SOURCE_DATE_EPOCH \
+    --output type=image,name=myapp:1.0,rewrite-timestamp=true .
   ```
+  Check reproducibility by building twice and comparing digests (or with `diffoci`).
 
 ### 11. Labels, `.dockerignore`, and small contexts
 
